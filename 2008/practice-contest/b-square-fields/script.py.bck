@@ -1,0 +1,86 @@
+from math import hypot
+
+import pylab
+
+def ReadInts():
+  return list(map(int, fd_in.readline().strip().split(' ')))
+
+def Cross(a, b):
+  for i in a:
+    for j in b:
+      yield (i, j)
+
+def ClusterDistance(c1, c2):
+  max_d = None
+  for (p1, p2) in Cross(c1, c2):
+    d = hypot(p2[0] - p1[0], p2[1] - p1[1])
+    if not max_d or d > max_d: max_d = d
+
+  return max_d
+
+def DistanceMatrix(clusters):
+  matrix = []
+  for i in xrange(len(clusters)):
+    matrix.append([])
+    for j in xrange(len(clusters)):
+      if i == j: matrix[i].append(0)
+      else:
+        matrix[i].append(ClusterDistance(clusters[i], clusters[j]))
+
+  return matrix
+
+def ClosestClusters(matrix):
+  min_d = -1
+  for (i, j) in Cross(xrange(len(matrix)), xrange(len(matrix))):
+    if i != j:
+      d = matrix[i][j]
+      if min_d == -1 or d < min_d:
+        min_d = d
+        (min_i, min_j) = (i, j) 
+  
+  return (min_i, min_j)
+
+def ClusterSize(c):
+  for (i, (x, y)) in enumerate(c):
+    if i == 0: (mx, my, Mx, My) = (x, y, x, y)
+    else:
+      if x < mx: mx = x
+      elif x > Mx: Mx = x
+      if y < my: my = y
+      elif y > My: My = y
+  return (Mx - mx, My - my)
+
+fd_in = open('B-large-practice.in')
+fd_out = open('out', 'w')
+for N in xrange(1, int(fd_in.readline()) + 1):
+  n, k = ReadInts()[0:2]
+
+  points = [tuple(ReadInts()[0:2]) for _ in xrange(n)]
+  clusters = [[t] for t in points]
+
+  while len(clusters) > k:
+    print clusters
+    m = DistanceMatrix(clusters)
+    (i, j) = ClosestClusters(m)
+    for p in clusters[j]:
+      clusters[i].append(p)
+    clusters.pop(j)
+
+  max_d = None
+  for c in clusters:
+    (width, height) = ClusterSize(c)
+    d = max(width, height)
+    if max_d is None or d > max_d: max_d = d
+
+  print clusters
+  x = map(lambda (x, y): x, points)
+  y = map(lambda (x, y): y, points)
+  pylab.plot(x, y, 'o')
+
+  pylab.grid(True)
+  pylab.show()
+
+  print 'Case #%d: %d' % (N, max_d)
+  fd_out.write('Case #%d: %d\n' % (N, max_d))
+
+
